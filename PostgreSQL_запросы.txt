@@ -1,0 +1,90 @@
+SELECT * FROM bd_shops.market_board;
+
+
+SELECT product_id, (SUM(Price_sale_in) + 10000) AS total_cost
+FROM bd_shops.product_deliv
+GROUP BY product_id;
+
+
+
+SELECT departament, AVG(salary) AS avg_salary
+FROM bd_shops.employers
+GROUP BY departament
+HAVING AVG(salary) > 100000;
+
+
+
+SELECT e."Name" AS employee_name, s.city AS work_city
+FROM bd_shops.employers e
+LEFT JOIN bd_shops.shops s ON e.shop_id = s.id;
+
+
+select 
+  market_name "Название магазина",
+  square "Площадь",
+  city "Город",
+  (select size_name from market_size ms where s.square >= ms.min_square order by min_square desc limit 1) as "Тип"
+from shops s;
+
+
+
+select 
+  s.market_name "Магазин",
+  s.square "Площадь магазина",
+  ms.size_name "Тип магазина",
+  e."Name" "Сотрудник",
+  e.salary "Зарплата",
+  mb.base_cost "Базовая зарплата",
+  case 
+    when e.salary > CAST(mb.base_cost AS numeric) 
+      then 'Переплата'
+      else 'Зп по рынку'
+  end "Тип зп"
+from employers e 
+join shops s on s.id = e.shop_id 
+join market_size ms on ms.min_square = (select MAX(min_square) from market_size where s.square >= min_square)
+join market_board mb on mb.size_name = ms.size_name
+
+
+
+CREATE OR REPLACE FUNCTION create_table7()
+RETURNS VOID AS
+$$
+BEGIN
+    CREATE TABLE IF NOT EXISTS func.table7 AS
+    SELECT
+        pd.product_id,
+        pd.delivery_day,
+        p.price_sale_out - pd.price_sale_in AS price_difference
+    FROM
+        bd_shops.product_deliv pd
+    JOIN
+        bd_shops.product p ON pd.product_id = p.id;
+END;
+$$
+LANGUAGE 'plpgsql';
+
+SELECT create_table7();
+
+
+
+select 
+  v.id "Номер визита",
+  v.visit_date "Дата визита",
+  p.product_name "Продукт",
+  p.price_sale_out "Отпускная цена",
+  s.market_name
+from visits v
+join product p on p.id = v.product_id and p.shop_id = v.shop_id 
+join shops s on s.id = v.shop_id
+
+
+
+
+
+
+
+
+
+
+
